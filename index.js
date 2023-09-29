@@ -35,8 +35,9 @@ async function run() {
     // user registration
     app.post("/users", async (req, res) => {
       const user = req.body;
-      const query = { email: user.email };
-
+      // const query = { email: user.email };
+      console.log(user);
+      const query = { email: user.email, role: user.role };
       const existingUser = await userCollection.findOne(query);
 
       if (existingUser) {
