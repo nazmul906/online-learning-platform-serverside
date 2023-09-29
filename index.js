@@ -32,6 +32,7 @@ async function run() {
     const platformCollection = client.db("platformDB").collection("course");
     const userCollection = client.db("platformDB").collection("users");
 
+    // user registration
     app.post("/users", async (req, res) => {
       const user = req.body;
       const query = { email: user.email };
@@ -44,6 +45,12 @@ async function run() {
 
       const result = await userCollection.insertOne(query);
       console.log("register", result);
+      res.send(result);
+    });
+
+    // get all user[only by admin]
+    app.get("/users", async (req, res) => {
+      const result = await userCollection.find().toArray();
       res.send(result);
     });
 
