@@ -29,7 +29,7 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
-    const platformCollection = client.db("platformDB").collection("course");
+    const classCollection = client.db("platformDB").collection("course");
     const userCollection = client.db("platformDB").collection("users");
 
     // user registration
@@ -50,8 +50,24 @@ async function run() {
     });
 
     // get all user[only by admin]
-    app.get("/users", async (req, res) => {
-      const result = await userCollection.find().toArray();
+    // app.get("/users", async (req, res) => {
+    //   const result = await userCollection.find().toArray();
+    //   res.send(result);
+    // });
+
+    // post class by instrucot
+    app.post("/addclass", async (req, res) => {
+      const item = req.body;
+
+      const result = await classCollection.insertOne(item);
+      console.log("class", result);
+      res.send(result);
+    });
+
+    // get class to show in ui
+
+    app.get("/allcourse", async (req, res) => {
+      const result = await classCollection.find().toArray();
       res.send(result);
     });
 
