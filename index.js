@@ -7,6 +7,8 @@ require("dotenv").config();
 const { ObjectId } = require("mongodb");
 const multer = require("multer");
 
+const jwt = require("jsonwebtoken");
+
 // Create a storage engine for multer
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -45,6 +47,15 @@ async function run() {
     const classCollection = client.db("platformDB").collection("course");
     const userCollection = client.db("platformDB").collection("users");
 
+    // jwt
+    app.post("/jwt", (req, res) => {
+      const user = req.body;
+
+      const jwtToken = jwt.sign(user, process.env.SecretAccessToken, {
+        expiresIn: "8hr",
+      });
+      res.send({ jwtToken });
+    });
     // user registration
     app.post("/users", async (req, res) => {
       const user = req.body;
