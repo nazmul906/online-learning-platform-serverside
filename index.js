@@ -110,7 +110,7 @@ async function run() {
           { _id: new ObjectId(courseId) },
           { $set: { enrollment: course.enrollment } }
         );
-        console.log("updated enrollment", result);
+        /*  console.log("updated enrollment", result);*/
         if (result.modifiedCount === 1) {
           return res.status(200).json({ message: "Enrolled successfully" });
         } else {
@@ -121,6 +121,61 @@ async function run() {
         return res.status(500).json({ message: "Internal server error" });
       }
     });
+
+    // add to favourite by user(with their email)
+    // Toggle course as favorite for a user
+    app.post("/favorite/:id", async (req, res) => {
+      const courseId = req.params.id;
+      const userEmail = req.body.email;
+
+      try {
+        // Check if the course with the given ID exists
+        const course = await classCollection.findOne({
+          _id: new ObjectId(courseId),
+        });
+
+        if (!course) {
+          return res.status(404).json({ message: "Course not found" });
+        }
+
+        // Check if the course has a "favorites" field, if not, create it as an array
+        if (!course.favorites) {
+          course.favorites = [];
+        }
+
+        // it is for updating the favourite option to unfavouite by clicking
+        // Check if the user's email is already in the "favorites" array
+
+        const index = course.favorites.indexOf(userEmail);
+        if (index === -1) {
+          // User is not in favorites, so add them
+          course.favorites.push(userEmail);
+        } else {
+          // User is in favorites, so remove them (toggle favorite)
+          course.favorites.splice(index, 1);
+          return res.status(200).json({ message: "Favorite status removed" });
+        }
+
+        // Update the course document with the new "favorites" data
+        const result = await classCollection.updateOne(
+          { _id: new ObjectId(courseId) },
+          { $set: { favorites: course.favorites } }
+        );
+
+        if (result.modifiedCount === 1) {
+          // Favorite status updated successfully
+          return res.status(200).json({ message: "Favorite status updated" });
+        } else {
+          return res
+            .status(500)
+            .json({ message: "Failed to update favorite status" });
+        }
+      } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Internal server error" });
+      }
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
