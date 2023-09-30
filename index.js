@@ -176,6 +176,31 @@ async function run() {
       }
     });
 
+    // get course by an instructor
+
+    app.get("/courses/:instructorEmail", async (req, res) => {
+      const instructorEmail = req.params.instructorEmail;
+
+      try {
+        // Use your MongoDB client and collection to query courses by instructor email
+        const courses = await classCollection
+          .find({ instructorEmail })
+          .toArray();
+
+        if (courses.length === 0) {
+          return res
+            .status(404)
+            .json({ message: "No courses found for this instructor" });
+        }
+
+        // Send the courses as a JSON response
+        res.json(courses);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error" });
+      }
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
