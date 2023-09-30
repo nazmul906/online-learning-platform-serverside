@@ -5,7 +5,19 @@ const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion } = require("mongodb");
 require("dotenv").config();
 const { ObjectId } = require("mongodb");
+const multer = require("multer");
 
+// Create a storage engine for multer
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "./uploads/"); // Define the destination folder for uploaded files
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname); // Define the file name for uploaded files
+  },
+});
+
+const upload = multer({ storage: storage });
 // middleware
 app.use(cors());
 app.use(express.json());
@@ -198,6 +210,46 @@ async function run() {
       } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Internal server error" });
+      }
+    });
+
+    // route for uploading content by instructor
+    app.post("/uploadVideo/:id", upload.single("video"), async (req, res) => {
+      const courseId = req.params.id; // Get the course ID from the URL
+      const videoFile = req.file; // Get the uploaded video file
+      const content = videoFile.filename; // Store the filename in the content field
+
+      try {
+        // Check if the course with the given ID exists
+        const course = await classCollection.findOne({
+          _id: new ObjectId(courseId),
+        });
+
+        if (!course) {
+          return res.status(404).json({ message: "Course not found" });
+        }
+
+        // Update the course document with the new content (video)
+        const result = await classCollection.updateOne(
+          { _id: new ObjectId(courseId) },
+          { $set: { content: content } }
+        );
+
+        if (result.modifiedCount === 1) {
+          // Video uploaded and course updated successfully
+          return res
+            .status(200)
+            .json({ success: true, message: "Video uploaded successfully" });
+        } else {
+          return res
+            .status(500)
+            .json({ success: false, message: "Failed to update course" });
+        }
+      } catch (error) {
+        console.error(error);
+        return res
+          .status(500)
+          .json({ success: false, message: "Internal server error" });
       }
     });
 
