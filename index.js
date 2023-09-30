@@ -301,6 +301,39 @@ async function run() {
       res.send(result);
     });
 
+    // user role is checked
+
+    app.get("/users/user/:email", verifyJwt, async (req, res) => {
+      const userEmail = req.params.email;
+
+      if (userEmail !== req.decoded.email) {
+        res.send({ user: false });
+      }
+
+      const query = { email: userEmail };
+      const user = await userCollection.findOne(query);
+
+      const result = { user: user?.role === "user" };
+      res.send(result);
+    });
+
+    // get course by user enrolled
+
+    // Update your Express backend with this route
+    app.get("/enrolledcourses/:userEmail", async (req, res) => {
+      const userEmail = req.params.userEmail;
+
+      try {
+        const enrolledCourses = await classCollection
+          .find({ enrollment: userEmail })
+          .toArray();
+        res.json(enrolledCourses);
+      } catch (error) {
+        console.error("Error fetching enrolled courses:", error);
+        res.status(500).json({ message: "Internal server error" });
+      }
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
