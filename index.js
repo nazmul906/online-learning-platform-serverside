@@ -24,6 +24,28 @@ const upload = multer({ storage: storage });
 app.use(cors());
 app.use(express.json());
 
+// verifyjwt
+
+const verifyJwt = (req, res, next) => {
+  const authorization = req.headers.authorization;
+  if (!authorization) {
+    return res.status(401).send({ error: true, message: "unathorized token" });
+  }
+
+  const token = authorization.split(" ")[1];
+
+  // now verify
+  jwt.verify(token, process.env.SecretAccessToken, (err, decoded) => {
+    if (err) {
+      return res
+        .status(401)
+        .send({ error: true, message: "unathorized token" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+};
+
 app.get("/", (req, res) => {
   res.send("welcome to online platform");
 });
@@ -262,6 +284,21 @@ async function run() {
           .status(500)
           .json({ success: false, message: "Internal server error" });
       }
+    });
+
+    // verify instructor for useinstructor hooks
+    app.get("/users/instructor/:email", verifyJwt, async (req, res) => {
+      const userEmail = req.params.email;
+      // console.log("userEmail", userEmail);
+      if (userEmail !== req.decoded.email) {
+        res.send({ instructor: false });
+      }
+      const query = { email: userEmail };
+      const user = await userCollection.findOne(query);
+      // console.log(user);
+      const result = { instructor: user?.role === "instructor" };
+      // response is {instructor:true}
+      res.send(result);
     });
 
     // Send a ping to confirm a successful connection
